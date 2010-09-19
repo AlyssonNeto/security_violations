@@ -1,0 +1,56 @@
+<?php
+// $Id$
+/**
+ * @file security_violations.module
+ * This is just to demonstrate BAD security practices.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function security_violations_menu() {
+  $items['security_violations'] = array(
+    'title' => 'Security Violations',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('security_violations_basic'),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+function security_violations_basic(&$form_state) {
+  if (isset($form_state['values']['anytext'])) {
+    $form['markup1'] = array(
+      '#type' => 'markup',
+      '#value' => 'You entered: ' . $form_state['values']['anytext'],
+    );
+  }
+  if (isset($form_state['values']['uid'])) {
+    $username = db_result(db_query("SELECT name FROM {users} where uid=" . $form_state['values']['uid']));
+    $form['markup2'] = array(
+      '#type' => 'markup',
+      '#value' => t('Your username is %name', array('%name' => $username)),
+    );
+  }
+  $form['anytext'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Enter any text you want to display here'),
+    '#default_value' => !empty($form_state['values']['anytext']) ? $form_state['values']['anytext'] : '',
+  );
+  $form['uid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Enter your uid here and I will give you your username'),
+    '#default_value' => !empty($form_state['values']['uid']) ? $form_state['values']['uid'] : '',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  return $form;
+}
+
+function security_violations_basic_submit($form, &$form_state) {
+  drupal_set_message($form_state['values']['anytext']);
+  $form_state['rebuild'] = TRUE;
+}

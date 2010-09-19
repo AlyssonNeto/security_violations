@@ -1,0 +1,4 @@
+; $Id$
+name = Security violations
+description = Demonstrate bad security practices. Not to be used on a real site.
+core = 6.x

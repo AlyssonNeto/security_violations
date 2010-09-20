@@ -61,6 +61,7 @@ function security_violations_basic(&$form_state) {
   $form['anytext'] = array(
     '#type' => 'textarea',
     '#title' => t('Enter any text you want to display here'),
+    '#description' => t('You might want to try<br/>' . check_plain('<img src="http://junk.com/junker" onerror="alert(\'failed\')" />')),
     '#default_value' => !empty($_SESSION['anytext']) ? $_SESSION['anytext'] : '<script>alert("your site will be hacked");</script>',
   );
 
@@ -70,7 +71,7 @@ function security_violations_basic(&$form_state) {
   $form['uid'] = array(
     '#type' => 'textfield',
     '#title' => t('Enter your uid here and I will give you your username'),
-    '#description' => t('Or you might try the insidious "11111 OR pass=md5("nothing")"'),
+    '#description' => t('Or you might try the insidious <br/>11111 OR pass=md5(name)<br/>which returns the first user that has password same as username'),
     '#default_value' => !empty($_SESSION['uid']) ? $_SESSION['uid'] : '',
   );
   $form['submit'] = array(

@@ -20,28 +20,39 @@ function security_violations_menu() {
 }
 
 function security_violations_basic(&$form_state) {
-  if (isset($form_state['values']['anytext'])) {
+  global $_SESSION;
+  if (isset($_SESSION['anytext'])) {
     $form['markup1'] = array(
       '#type' => 'markup',
-      '#value' => 'You entered: ' . $form_state['values']['anytext'],
+      '#value' => '<div>You entered: ' .   $_SESSION['anytext'] . check_plain($_SESSION['anytext']) . '</div>',
     );
   }
-  if (isset($form_state['values']['uid'])) {
-    $username = db_result(db_query("SELECT name FROM {users} where uid=" . $form_state['values']['uid']));
+  if (isset($_SESSION['uid'])) {
+    // This query is dangerous and horribly insecure.
+    $username = db_result(db_query("SELECT name FROM {users} WHERE uid=" . $_SESSION['uid']));
+
+    // This query shows correct usage of db_query().
+    $correct_username = db_result(db_query("SELECT name FROM {users} WHERE uid=%d", $_SESSION['uid']));
     $form['markup2'] = array(
       '#type' => 'markup',
-      '#value' => t('Your username is %name', array('%name' => $username)),
+      '#value' => '<div>' . t('The username for uid %uid is %name (you may have wanted %correct_username instead)', array('%name' => $username, '%correct_username' => $correct_username, '%uid' => $_SESSION['uid'])) . '</div>',
     );
   }
+  // Try entering <script>alert("your site will be hacked");</script>
   $form['anytext'] = array(
     '#type' => 'textarea',
     '#title' => t('Enter any text you want to display here'),
-    '#default_value' => !empty($form_state['values']['anytext']) ? $form_state['values']['anytext'] : '',
+    '#default_value' => !empty($_SESSION['anytext']) ? $_SESSION['anytext'] : '<script>alert("your site will be hacked");</script>',
   );
+
+  // Try entering
+  // 11111 OR pass=md5("nothing")
+  // and get the first user with a password set to "nothing".
   $form['uid'] = array(
     '#type' => 'textfield',
     '#title' => t('Enter your uid here and I will give you your username'),
-    '#default_value' => !empty($form_state['values']['uid']) ? $form_state['values']['uid'] : '',
+    '#description' => t('Or you might try the insidious "11111 OR pass=md5("nothing")"'),
+    '#default_value' => !empty($_SESSION['uid']) ? $_SESSION['uid'] : '',
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -51,6 +62,7 @@ function security_violations_basic(&$form_state) {
 }
 
 function security_violations_basic_submit($form, &$form_state) {
-  drupal_set_message($form_state['values']['anytext']);
-  $form_state['rebuild'] = TRUE;
+  global $_SESSION;
+  $_SESSION['anytext'] = $form_state['values']['anytext'];
+  $_SESSION['uid'] = $form_state['values']['uid'];
 }

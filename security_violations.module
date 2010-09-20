@@ -5,10 +5,20 @@
  * This is just to demonstrate BAD security practices.
  */
 
+
+/**
+ * Implementation of hook_init().
+ * Warn people they really shouldn't be running this module.
+ */
+function security_violations_init() {
+  drupal_set_message(t('This site is running the "Security Violations" module which should <strong>never</strong> be enabled on a <em>public</em> website.  If this is a public website, you should immediately <a href="!uri">disable it</a>', array('!uri' => url('admin/build/modules'))));
+}
+
 /**
  * Implementation of hook_menu().
  */
 function security_violations_menu() {
+  // A general form
   $items['security_violations'] = array(
     'title' => 'Security Violations',
     'page callback' => 'drupal_get_form',
@@ -16,11 +26,20 @@ function security_violations_menu() {
     'access callback' => TRUE,
   );
 
+  // access to /unprotected_delete/nid will result in the deletion of the node
+  // if the user has 'delete any page content' permission and the nid number
+  // provided exists and is of type 'page'.
+  $items['unprotected_delete'] = array(
+    'page callback' => 'security_violations_unprotected_delete',
+    'access arguments' => array('delete any page content'),
+  );
   return $items;
 }
 
+/**
+ * Present a form with some clear security issues.
+ */
 function security_violations_basic(&$form_state) {
-  global $_SESSION;
   if (isset($_SESSION['anytext'])) {
     $form['markup1'] = array(
       '#type' => 'markup',
@@ -61,8 +80,27 @@ function security_violations_basic(&$form_state) {
   return $form;
 }
 
+/**
+ * Submit handler for security_violations_basic().
+ */
 function security_violations_basic_submit($form, &$form_state) {
-  global $_SESSION;
   $_SESSION['anytext'] = $form_state['values']['anytext'];
   $_SESSION['uid'] = $form_state['values']['uid'];
+}
+
+/**
+ * Delete a node if it exists and is a page.
+ *
+ * @param $nid
+ *   The nid to be deleted.
+ */
+function security_violations_unprotected_delete($nid = 0) {
+  $node = node_load($nid);
+  if (!empty($node) && $node->type == 'page') {
+    node_delete($nid);
+    return(t('Deleted node %title', array('%title' => $node->title)));
+  }
+  else {
+    return(t('No page node with nid=%nid was found', array('%nid' => $nid)));
+  }
 }
